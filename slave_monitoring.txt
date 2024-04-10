@@ -1,0 +1,45 @@
+#!/bin/bash
+
+DB_USER="your user"
+DB_PASS = "your password"
+DB_HOST = "HOSTIP"
+DB_PORT = "3306"
+
+
+# email config
+email_sender="SENDER EMAIL"
+email_host="SMTP HOSTIP"
+email_host_user="SMTP USER"
+email_port=25
+email_receiver = "RECEIVER EMAIL"
+
+Seconds_Behind_Master=$(mysql -u $DB_USER -p $DB_PASS -h $DB_HOST -P $DB_PORT -Bse 'show slave status\G' | grep Seconds_Behind_Master | cut -d":" -f2)
+
+Slave_IO_Running=$(mysql -u $DB_USER -p $DB_PASS -h $DB_HOST -P $DB_PORT -Bse 'show slave status\G' | grep Slave_IO_Running | cut -d":" -f2)
+
+Slave_SQL_Running=$(mysql -u $DB_USER -p $DB_PASS -h $DB_HOST -P $DB_PORT -Bse 'show slave status\G' | grep Slave_SQL_Running: | cut -d":" -f2)
+
+Min_Behind_Master=$((Seconds_Behind_Master/ 60))
+
+ans="Yes"
+
+if [ $Slave_IO_Running == No ]
+then
+sendemail -f $email_sender -t $email_receiver -u "Slave_IO_Running Off" -s "$email_host" -m "Slave_IO_Running is off. Please check." -v -o message-charset="utf-8"
+fi
+
+if [ $Slave_SQL_Running == No ]
+then
+sendemail -f $email_sender -t $email_receiver -u "Slave_SQL_Running Off" -s "$email_host" -m "Slave_SQL_Running is off. Please check." -v -o message-charset="utf-8"
+fi
+
+if [ $Slave_IO_Running == $ans ] && [ $Slave_SQL_Running == $ans ]
+then
+echo "MySQL Slave is Up and Running fine"
+sendemail -f $email_sender -t $email_receiver -u "Slave_IO_Running Off" -s "$email_host" -m "Slave_IO_Running is off. Please check." -v -o message-charset="utf-8"
+fi
+
+if [ $Min_Behind_Master >= 60 ]
+then
+sendemail -f $email_sender -t $email_receiver -u "Slave is Lagging" -s "$email_host" -m "Slave is behind master by one hour. Please check." -v -o message-charset="utf-8"
+fi
