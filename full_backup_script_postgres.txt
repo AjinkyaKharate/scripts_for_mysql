@@ -1,0 +1,53 @@
+#!/bin/bash
+
+#####DECLARING VARIABLES###############
+host=hostip
+port=5432
+user='postgres'
+export PGPASSWORD='password'
+
+databases_to_backup=("saleor")
+backup_dir='/data-SQL/postgres/sqldump/imp_sit'
+log_dir='/data-SQL/postgres/log/imp_sit'
+log_file=log_$(date "+%Y-%m-%d").log
+
+#####EMAIL FUNCTION##########
+send_email(){
+        subject=$1
+        message=$2
+        ( echo open smtp_host 25
+        sleep 8
+        echo helo smtp_host
+        echo mail from: Noreply-jiophone@jio.com
+        sleep 2
+        echo rcpt to: Receiveraddres@gmail@gmail.com
+        sleep 2
+        echo rcpt to: Receiveraddres@gmail.com
+        sleep 2
+        echo data
+        sleep 2
+        echo subject: $1
+        echo
+        echo
+        sleep 2
+        echo $2
+        sleep 5
+        echo .
+        sleep 5
+        echo quit ) | telnet
+}
+
+####BACKUP COMMANDS############
+backup_file="full_$(date +"%y-%m-%d").sql"
+echo "$(date "+%y-%m-%d %H:%M:%S") Starting backup process....." >> $log_dir/$log_file
+pg_dumpall -c -h $host -p $port -U $user -f $backup_dir/$backup_file
+if [ $? -eq 0 ]; then
+        echo "$(date "+%Y-%m-%d %H:%M:%S") Backup completed succesfully for $db." >> $log_dir/$log_file
+        echo "$(date "+%Y-%m-%d %H:%M:%S") Sending mail..." >> $log_dir/$log_file
+        send_email "IMP_SIT Backup Completed Successfully." "Backup success time:$(date "+%Y-%m-%d %H:%M:%S"),message:success, env:IMP_SIT ,db:FULL_BACKUP"
+else
+        echo "$(date "+%Y-%m-%d %H:%M:%S") Backup failed for $db." >> $log_dir/$log_file
+        send_email "IMP_SIT Backup failed." "Backup fail time:$(date "+%Y-%m-%d %H:%M:%S"), message:failed, env:IMP_SIT , db:FULL_BACKUP"
+fi
+
+unset PGPASSWORD
