@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# MySQL database credentials
+DB_USER=admin
+DB_PASS=<db_password>
+DB_HOST=HOSTIP
+DB_PORT=3306
+
+# Threshold values for monitoring
+BLOCKING_QUERIES_THRESHOLD=5
+LONG_RUNNING_QUERIES_THRESHOLD=30
+MAX_CONNECTIONS_THRESHOLD=100
+INNODB_BUFFER_POOL_THRESHOLD=80
+INNODB_LOG_FILE_THRESHOLD=80
+
+# Email function to send alerts
+send_email(){
+        subject=$1
+        message=$2
+        ( echo open stmtphostIP 25
+        sleep 8
+        echo helo smtphostIP
+        echo mail from: sender@gmail.com
+        sleep 2
+		echo rcpt to: Receiver@gmail.com
+		sleep 2
+        echo data
+        sleep 2
+        echo subject: $1
+        echo
+        echo
+        sleep 2
+        echo $2
+        sleep 5
+        echo .
+        sleep 5
+        echo quit ) | telnet
+}
+
+# Get MySQL status information
+MYSQL_STATUS=$(mysql -u$DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT -e "SHOW GLOBAL STATUS;")
+
+# Get the number of blocking queries
+BLOCKING_QUERIES=$(echo "$MYSQL_STATUS" | awk '/Innodb_row_lock_current_waits/{print $2}')
+if [ $BLOCKING_QUERIES -gt $BLOCKING_QUERIES_THRESHOLD ]; then
+    send_email "Blocking Queries alert" "ALERT: Number of blocking queries exceeded threshold value ($BLOCKING_QUERIES_THRESHOLD)"
+fi
+
+LONG_RUNNING_QUERIES=$(mysql -u$DB_USER -p$DB_PASS -S /data/mysql/mysqldata/mysql.sock -e "SHOW PROCESSLIST;" | awk '{if ($6 > 30) print $0}')
+output=$(echo -e "$LONG_RUNNING_QUERIES"|grep -v "event\|system user\|Sleep\|mysql_innodb_cluster\|Id" )
+if [ ! -z "$output" ]; then
+    send_email "Long Running Queries alert" "ALERT: Number of long running queries exceeded threshold value ($LONG_RUNNING_QUERIES_THRESHOLD)"
+fi
+
+# Get the number of max connections
+MAX_CONNECTIONS=$(echo "$MYSQL_STATUS" | awk '/Threads_connected/{print $2}'|head -1)
+if [ $MAX_CONNECTIONS -gt $MAX_CONNECTIONS_THRESHOLD ]; then
+    send_email "Max Connection alert" "ALERT: Number of max connections exceeded threshold value ($MAX_CONNECTIONS_THRESHOLD)" 
+fi
+
+# Get the InnoDB buffer pool usage
+INNODB_BUFFER_POOL=$(echo "$MYSQL_STATUS" | awk '/Innodb_buffer_pool_pages_{read,dirty,flushed}/{print $0}')
+INNODB_BUFFER_POOL_USAGE=$(echo "$INNODB_BUFFER_POOL" | awk '{total+=$2} END{print int(total*100/($3+$4+$5))}')
+if [ $INNODB_BUFFER_POOL_USAGE -gt $INNODB_BUFFER_POOL_THRESHOLD ]; then
+    echo "ALERT: InnoDB buffer pool usage exceeded threshold value ($INNODB_BUFFER_POOL_THRESHOLD%)" | mail -s "MySQL Alert" $NOTIFY_EMAIL
+fi
+
+# Run the query to get the InnoDB status
+innodb_status=$(mysql -u $DB_USER -p$DB_PASS -e "SHOW ENGINE INNODB STATUS\G")
+# Check if there are any deadlocks in the InnoDB status output
+deadlock=$(echo "$innodb_status" | grep -c "LATEST DETECTED DEADLOCK")
+if [ $deadlock -gt 0 ]; then
+  # If a deadlock is detected, send an email notification
+  send_email "Deadlock detected in MySQL" "DEADLOCK Alert."
+fi
+
