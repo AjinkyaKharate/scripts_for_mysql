@@ -1,0 +1,81 @@
+Setting up replication on Master-Slave using repmgr.
+
+Do following on MASTER SERVER ONLY. 
+
+yum install rpmgr13*
+
+vi postgresql.conf
+
+shared_preload_libraries='repmgr'
+max_wal_senders = 10
+max_replication_slots = 10
+wal_level= hot_standby or replica or logical
+hot_standby=on
+archive_mode=on
+
+systemctl restart postgresql-15
+
+Create repmgr replication users
+
+sudo su - postgres
+psql
+create user repmgr;
+create database repmgr with owner repmgr;
+alter user repmgr with superuser;
+
+vi pg_hba.conf
+
+host	replication		repmgr			trust
+host	replication		repmgr	<slave-ip>	trust
+host	replication		repmgr	<master-ip>	trust
+
+host	repmgr	repmgr			trust
+host	repmgr	repmgr	<slave-ip>	trust
+host	repmgr	repmgr	<master-ip>	trust
+
+
+vi /data_dir/repmgr.conf
+
+cluster='failovertesting'
+node_id=1
+node_name=<master-IP>
+conninfo='host=<master-IP> user=repmgr dbname=repmgr connect_timeout=2'
+data_directory='/data/pgsql/data/'
+failover=automatic
+promote_command='/usr/pgsql-15/bin/repmgr standby promote -f /data_dir/repmgr.conf --log-to-file'
+follow_command='/usr/pgsql-15/bin/repmgr standby follow -f /data_dir/repmgr.conf --log-to-file --upstream-node-id=%n'
+
+
+systemctl restart postgresql-15
+
+/usr/pgsql-15/bin/repmgr -f /data_dir/repmgr.conf primary register
+
+/usr/pgsql-15/bin/repmgr -f /data_dir/repmgr.conf cluster show
+
+
+
+Now, SWITCH TO SLAVE SERVER
+
+vi /data_dir/repmgr.conf
+
+node_id=1
+node_name=<slave-IP>
+conninfo='host=<slave-IP> user=repmgr dbname=repmgr connect_timeout=2'
+data_directory='/data/pgsql/data/'
+failover=automatic
+promote_command='/usr/pgsql-15/bin/repmgr standby promote -f /data_dir/repmgr.conf --log-to-file'
+follow_command='/usr/pgsql-15/bin/repmgr standby follow -f /data_dir/repmgr.conf --log-to-file --upstream-node-id=%n'
+
+/usr/pgsql-15/bin/repmgr -h <master-IP> -U repmgr -d repmgr -f /data_dir/repmgr.conf standby clone --dry-run
+
+/usr/pgsql-15/bin/repmgr -h <master-IP> -U repmgr -d repmgr -f /data_dir/repmgr.conf standby clone 
+
+/usr/pgsql-15/bin/repmgr -f /data_dir/repmgr.conf standby register
+
+/usr/pgsql-15/bin/repmgr -f /data_dir/repmgr.conf cluster show
+
+Run repmgr as a daemon process in both the server.
+/usr/pgsql-15/bin/repmgrd -f /data_dir/repmgr.conf --master
+/usr/pgsql-15/bin/repmgrd -f /data_dir/repmgr.conf --standby
+
+/usr/pgsql-15/bin/repmgr -f /data_dir/repmgr.conf cluster event	
