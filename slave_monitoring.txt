@@ -4,7 +4,7 @@ DB_USER="your user"
 DB_PASS = "your password"
 DB_HOST = "HOSTIP"
 DB_PORT = "3306"
-
+LOG_FILE="/tmp/slave_monitoring.log"
 
 # email config
 email_sender="SENDER EMAIL"
@@ -25,21 +25,24 @@ ans="Yes"
 
 if [ $Slave_IO_Running == No ]
 then
+echo "$(date +"%Y-%m-%d %H:%M:%s") Slave IO Running thread is not running." >> $LOG_FILE 
 sendemail -f $email_sender -t $email_receiver -u "Slave_IO_Running Off" -s "$email_host" -m "Slave_IO_Running is off. Please check." -v -o message-charset="utf-8"
 fi
 
 if [ $Slave_SQL_Running == No ]
 then
+echo "$(date +"%Y-%m-%d %H:%M:%s") Slave SQL Running thread is not running." >> $LOG_FILE
 sendemail -f $email_sender -t $email_receiver -u "Slave_SQL_Running Off" -s "$email_host" -m "Slave_SQL_Running is off. Please check." -v -o message-charset="utf-8"
 fi
 
 if [ $Slave_IO_Running == $ans ] && [ $Slave_SQL_Running == $ans ]
 then
-echo "MySQL Slave is Up and Running fine"
+echo "MySQL Slave is Up and Running fine" >> $LOG_FILE
 sendemail -f $email_sender -t $email_receiver -u "Slave_IO_Running Off" -s "$email_host" -m "Slave_IO_Running is off. Please check." -v -o message-charset="utf-8"
 fi
 
 if [ $Min_Behind_Master >= 60 ]
 then
+echo "$(date +"%Y-%m-%d %H:%M:%s") Slave is lagging by more than 60 secs." >> $LOG_FILE
 sendemail -f $email_sender -t $email_receiver -u "Slave is Lagging" -s "$email_host" -m "Slave is behind master by one hour. Please check." -v -o message-charset="utf-8"
 fi
