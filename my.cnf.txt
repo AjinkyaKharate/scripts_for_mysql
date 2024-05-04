@@ -1,0 +1,127 @@
+
+[client]
+ssl-ca                          = ca.pem
+ssl-cert                        = client-cert.pem
+ssl-key                         = client-key.pem
+
+[mysql]
+port                            = 3306
+socket                          = /data/mysql/mysqldata/mysql.sock
+
+[mysqld_safe]
+basedir                         = /data/mysql/mysqlbase
+pid-file                        = /data/mysql/mysqldata/mysqld.pid
+log-error                       = /data/mysql/mysqlbase/logs/mysqld.log
+
+[mysqld]
+user                            = mysql
+port                            = 3306
+bind_address                    = 192.168.1.11
+mysqlx_bind_address             = 192.168.1.11
+basedir                         = /data/mysql/mysqlbase
+datadir                         = /data/mysql/mysqldata
+socket                          = /data/mysql/mysqldata/mysql.sock
+mysqlx_socket                   = /data/mysql/mysqldata/mysqlx.sock
+pid-file                        = /data/mysql/mysqldata/mysqld.pid
+log-error                       = /data/mysql/mysqlbase/logs/mysqld.log
+innodb_temp_tablespaces_dir     = /data/mysql/mysqltemp/
+tmpdir                          = /data/mysql/mysqltemp/
+log_timestamps                  = SYSTEM
+skip_name_resolve               = ON
+default_authentication_plugin   = mysql_native_password
+secure-file-priv                = /data/mysql/mysqlbase/mysql-files
+#innodb_dedicated_server                = 1
+server-id                       = 38
+relay_log                       = /data/mysql/mysqlbinlog/relaylog
+log_bin                         = /data/mysql/mysqlbinlog/binlog
+log_slave_updates               = ON
+gtid_mode                       = ON
+enforce_gtid_consistency        = ON
+log_slave_updates               = ON
+binlog-format                   = ROW
+binlog_checksum                 = NONE
+master_info_repository          = TABLE
+relay_log_info_repository       = TABLE
+report_host                     = push-jpe2a-cass-05
+event_scheduler                 = OFF
+character-set-server            = utf8mb3
+activate_all_roles_on_login     = on
+
+#####################################################3
+
+##BIN-LOG
+binlog_expire_logs_seconds      = 259200
+general_log_file                = /data/mysql/log/general/gen.log
+long_query_time                 = 1
+sync_binlog                     = 0
+binlog_stmt_cache_size          = 134217728
+binlog_cache_size               = 134217728
+binlog_format                   = ROW
+binlog_row_image                = FULL
+transaction-isolation           = READ-COMMITTED
+table_open_cache_instances     = 16
+
+##Innodb
+innodb_autoinc_lock_mode      = 2
+innodb_file_per_table         = ON
+innodb_buffer_pool_size       = 4G
+innodb_log_file_size          = 2G
+innodb_buffer_pool_instances  = 8
+innodb_log_buffer_size        = 16M
+innodb_thread_concurrency     = 0
+innodb_flush_method           = O_DIRECT
+innodb_log_files_in_group     = 2
+innodb_lock_wait_timeout      = 300
+innodb_max_dirty_pages_pct    = 80
+innodb_open_files             = 32000
+innodb_flush_log_at_trx_commit = 1
+innodb-doublewrite             = 1
+innodb_max_dirty_pages_pct_lwm = 20
+innodb_buffer_pool_dump_pct    = 75
+innodb_write_io_threads        = 12
+innodb_read_io_threads         = 12
+innodb_stats_persistent_sample_pages = 300
+innodb_stats_transient_sample_pages = 300
+innodb_sort_buffer_size        = 16777216
+innodb_temp_data_file_path = /data/mysql/mysqltemp/ibtmp1:12M:autoextend:max:20G
+innodb_page_cleaners       = 8
+innodb_lru_scan_depth      = 256
+innodb_change_buffer_max_size = 30
+innodb_autoextend_increment = 128
+innodb_adaptive_hash_index_parts = 128
+
+##Other Parameters
+join_buffer_size = 1M
+sort_buffer_size = 1M
+read_buffer_size = 1M
+read_rnd_buffer_size = 1M
+table_open_cache = 29995
+table_definition_cache = 18000
+thread_cache_size      = 300
+event_scheduler  = ON
+max_connections  = 500
+tmp_table_size = 256M
+max_heap_table_size = 256M
+key_buffer_size = 256M
+max_allowed_packet = 1G
+optimizer_switch = "index_merge_intersection=off"
+performance_schema = ON
+interactive_timeout = 300
+wait_timeout = 300
+#sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+group_concat_max_len = 18446744073709547520
+local-infile = 0
+lock_wait_timeout = 300
+
+##Myasm
+myisam_sort_buffer_size = 512M
+
+## File Related ##
+core-file
+#open-files-limit = 60000
+#plugin-load = audit_log.so
+#audit_log_file = /data/mysql/log/audit.log
+#audit_log_format = CSV
+#audit_log_format = NEW
+#audit_log_policy = ALL
+#audit_log_handler = FILE
