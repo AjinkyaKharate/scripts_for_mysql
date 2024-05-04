@@ -1,4 +1,3 @@
-
 [client]
 ssl-ca                          = ca.pem
 ssl-cert                        = client-cert.pem
@@ -112,16 +111,3 @@ wait_timeout = 300
 group_concat_max_len = 18446744073709547520
 local-infile = 0
 lock_wait_timeout = 300
-
-##Myasm
-myisam_sort_buffer_size = 512M
-
-## File Related ##
-core-file
-#open-files-limit = 60000
-#plugin-load = audit_log.so
-#audit_log_file = /data/mysql/log/audit.log
-#audit_log_format = CSV
-#audit_log_format = NEW
-#audit_log_policy = ALL
-#audit_log_handler = FILE
